@@ -13,3 +13,4 @@ class LaozhaocrawlItem(Item):
     link=Field()
     categories=Field()
     tags=Field()
+    content=Field()

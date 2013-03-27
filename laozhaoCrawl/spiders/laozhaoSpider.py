@@ -9,7 +9,7 @@ import codecs
 import re
 from laozhaoCrawl.items import *
 
-fp=codecs.open("result.txt",'w','utf-8')
+fp=codecs.open("chenhaoresult.txt",'w','utf-8')
 class laozhaoSpider(BaseSpider):
     name="laozhao"
     allowed_domains = ['blog.zhaojie.me']
@@ -24,15 +24,17 @@ class laozhaoSpider(BaseSpider):
         hxs=HtmlXPathSelector(response)
         page=hxs.select("//div[@id='pager']/span[@class='current']/text()").extract()[0]
         next_page=int(page)+1
+
         for per in hxs.select("//div[@class='post']"):
             partlink=per.select("div[@class='entry']/a/@href").extract()[0]
             link=urlparse.urljoin(response.url,partlink)
-            # fp.write('******'+partlink+'\r\n')
             yield Request(link, callback=self.parse_blog)
-        if next_page<=30:
+
+        if next_page<=31:
             url=urlparse.urljoin(response.url, '?page=%s' % next_page)
             # self.log(url)
             yield Request(url, callback=self.parse)
+
 
     def parse_blog(self, response):
         hxs1=HtmlXPathSelector(response)
@@ -40,10 +42,11 @@ class laozhaoSpider(BaseSpider):
         title=hxs1.select("//div[@class='post']/h2/a/text()").extract()[0]
         categories="".join(hxs1.select("//div[@class='post']/ul/li[@class='icon_cat']/a/text()").extract())
         tags=" ".join(hxs1.select("//div[@class='post']/ul/li[@class='icon_bullet']/a/text()").extract())
-        item=LaozhaocrawlItem(title=title,summary=summary,categories=categories,link=response.url,tags=tags)
         cmt=hxs1.select("//div[@class='entry']").extract()[0]
         result=re.sub(r'<[^>]*?>','',cmt)
-        fp.write(result+'\r\n')
+        item=LaozhaocrawlItem(title=title,summary=summary,categories=categories,link=response.url,tags=tags,content=result)
+        yield item
+        # fp.write(title+'\r\n'+categories+'\r'+tags+'\r\n'+result)
 
 
 class chenhaoSpider(BaseSpider):
@@ -69,4 +72,5 @@ class chenhaoSpider(BaseSpider):
         result=re.sub(r'<[^>]*?>','',content)
         categories=" ".join(hxs.select("//div[@class='under']/span[2]/a/text()").extract())
         tags=" ".join(hxs.select("//div[@class='under']/span[4]/a/text()").extract())
-        fp.write(title+'\r\n')
+        fp.write(title+'\r\n'+categories+'\r'+tags+'\r\n'+result)
+        # yield LaozhaocrawlItem(title=title,content=result,tags=tags,categories=categories,link=response.url,summary=None)
